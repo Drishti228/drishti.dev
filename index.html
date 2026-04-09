@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drishti — Developer Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c10;--bg2:#0f1218;--bg3:#161b24;--border:#1e2633;--border-lit:#2a3647;--text:#c8d8e8;--text-dim:#5a7090;--text-dimmer:#3a4f66;--green:#4ade9b;--green-dim:#1a5c3a;--cyan:#38c4e0;--cyan-dim:#0e3d4d;--amber:#f0c060;--amber-dim:#3d2e0a;--red:#f06060;--purple:#a07cff;--font-mono:'JetBrains Mono',monospace;--font-display:'Syne',sans-serif;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-mono);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:9999;}
+.layout{display:grid;grid-template-columns:420px 1fr;height:100vh;overflow:hidden;}
+@media(max-width:900px){.layout{grid-template-columns:1fr;grid-template-rows:44vh 1fr;height:100vh;}}
+.terminal-pane{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.terminal-titlebar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:var(--bg3);border-bottom:1px solid var(--border);flex-shrink:0;user-select:none;}
+.dot{width:12px;height:12px;border-radius:50%;}
+.dot-r{background:#ff5f57;}.dot-y{background:#febc2e;}.dot-g{background:#28c840;}
+.terminal-title{flex:1;text-align:center;font-size:11px;color:var(--text-dim);letter-spacing:.05em;}
+.terminal-body{flex:1;overflow-y:auto;padding:16px;font-size:12.5px;line-height:1.7;scrollbar-width:thin;scrollbar-color:var(--border-lit) transparent;}
+.terminal-body::-webkit-scrollbar{width:4px;}.terminal-body::-webkit-scrollbar-thumb{background:var(--border-lit);border-radius:2px;}
+.t-line{display:block;color:var(--text-dim);}
+.t-green{color:var(--green);}.t-cyan{color:var(--cyan);}.t-amber{color:var(--amber);}.t-purple{color:var(--purple);}
+.t-dim{color:var(--text-dimmer);}.t-bright{color:var(--text);}
+.t-prompt{color:var(--green);font-weight:700;}.t-cmd{color:var(--cyan);}
+.t-comment{color:var(--text-dimmer);font-style:italic;}
+.t-section-header{color:var(--amber);font-weight:700;display:block;margin-top:4px;}
+.t-item{display:block;padding-left:16px;color:var(--text);}.t-item::before{content:'› ';color:var(--green);}
+.t-success{color:var(--green);}.t-error{color:var(--red);}
+.terminal-input-row{display:flex;align-items:center;padding:10px 16px;border-top:1px solid var(--border);background:var(--bg2);flex-shrink:0;gap:6px;position:relative;}
+.t-prompt-label{color:var(--green);font-size:11.5px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.input-wrapper{display:flex;align-items:center;flex:1;position:relative;min-width:0;}
+#terminal-input{flex:1;background:transparent;border:none;outline:none;color:var(--cyan);font-family:var(--font-mono);font-size:12.5px;caret-color:var(--green);position:relative;z-index:2;min-width:0;}
+#autocomplete-ghost{position:absolute;left:0;top:0;font-family:var(--font-mono);font-size:12.5px;color:transparent;pointer-events:none;white-space:pre;z-index:1;}
+.ghost-suffix{color:var(--text-dimmer);opacity:.5;}
+#suggestions{position:absolute;bottom:100%;left:0;right:0;background:var(--bg3);border:1px solid var(--border-lit);border-bottom:none;display:none;z-index:100;max-height:130px;overflow-y:auto;}
+#suggestions.open{display:block;}
+.suggestion-item{padding:6px 16px;font-size:12px;color:var(--text-dim);cursor:pointer;transition:background .1s;display:flex;justify-content:space-between;gap:12px;}
+.suggestion-item:hover,.suggestion-item.selected{background:var(--border);color:var(--cyan);}
+.sug-desc{color:var(--text-dimmer);font-size:11px;}
+.status-bar{height:22px;background:var(--green);display:flex;align-items:center;padding:0 12px;gap:16px;font-size:10px;color:#0a0c10;font-weight:600;letter-spacing:.04em;flex-shrink:0;}
+.status-bar span{opacity:.7;}.status-bar strong{opacity:1;}.status-time{margin-left:auto;}
+.visual-pane{overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-lit) transparent;position:relative;scroll-behavior:auto;}
+.visual-pane::-webkit-scrollbar{width:4px;}.visual-pane::-webkit-scrollbar-thumb{background:var(--border-lit);border-radius:2px;}
+.nav-bar{position:sticky;top:0;z-index:50;background:rgba(10,12,16,.93);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);padding:8px 40px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-dimmer);user-select:none;}
+.nav-bar-crumb{cursor:pointer;transition:color .15s;}.nav-bar-crumb:hover{color:var(--cyan);}.nav-bar-crumb.active{color:var(--green);}
+.nav-bar-sep{color:var(--border-lit);}
+.nav-bar-right{margin-left:auto;display:flex;gap:10px;}
+.nav-bar-cmd{cursor:pointer;padding:3px 10px;border:1px solid var(--border);border-radius:3px;transition:all .15s;color:var(--text-dimmer);}
+.nav-bar-cmd:hover{border-color:var(--green);color:var(--green);}
+.vsection{display:none;padding:36px 40px 60px;animation:fadeIn .35s ease;}
+.vsection.active{display:block;}
+#section-splash{display:none;flex-direction:column;justify-content:center;min-height:calc(100vh - 37px);padding:60px 40px;}
+#section-splash.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.section-label{font-size:10px;letter-spacing:.2em;color:var(--text-dimmer);text-transform:uppercase;margin-bottom:6px;}
+.section-title{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.1;margin-bottom:28px;color:#e8f2ff;}
+.section-title span{color:var(--green);}
+.splash-greeting{font-size:11px;letter-spacing:.25em;color:var(--green);text-transform:uppercase;margin-bottom:14px;}
+.splash-name{font-family:var(--font-display);font-size:62px;font-weight:800;color:#e8f2ff;line-height:1;margin-bottom:10px;}
+.splash-name span{color:var(--cyan);}
+.splash-role{font-size:14px;color:var(--text-dim);margin-bottom:6px;}
+.splash-role strong{color:var(--amber);font-weight:500;}
+.splash-tagline{font-size:12px;color:var(--text-dimmer);margin-bottom:28px;font-style:italic;}
+.splash-hint{font-size:11px;color:var(--text-dimmer);border:1px solid var(--border);padding:10px 16px;border-radius:4px;margin-bottom:36px;}
+.splash-hint span{color:var(--cyan);}
+.nav-pills{display:flex;flex-wrap:wrap;gap:10px;}
+.nav-pill{background:var(--bg3);border:1px solid var(--border);color:var(--text-dim);padding:8px 16px;border-radius:4px;font-size:11px;cursor:pointer;transition:all .15s;letter-spacing:.05em;}
+.nav-pill:hover{border-color:var(--green);color:var(--green);background:rgba(74,222,155,.05);transform:translateY(-1px);}
+.nav-pill.featured{border-color:var(--amber-dim);color:var(--amber);}
+.nav-pill.featured:hover{background:rgba(240,192,96,.08);border-color:var(--amber);}
+.about-text{font-size:13.5px;line-height:1.85;color:var(--text);max-width:560px;margin-bottom:28px;}
+.about-text p{margin-bottom:14px;}
+.about-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:var(--bg3);border:1px solid var(--border);padding:18px 20px;border-radius:6px;transition:border-color .2s;}
+.stat-card:hover{border-color:var(--border-lit);}
+.stat-num{font-family:var(--font-display);font-size:30px;font-weight:800;color:var(--green);line-height:1;margin-bottom:4px;}
+.stat-label{font-size:11px;color:var(--text-dimmer);letter-spacing:.06em;}
+.about-links{display:flex;gap:10px;flex-wrap:wrap;}
+.link-btn{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:4px;font-size:12px;text-decoration:none;transition:all .15s;border:1px solid var(--border);color:var(--text-dim);background:var(--bg3);}
+.link-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(56,196,224,.05);transform:translateY(-1px);}
+.skills-grid{display:flex;flex-direction:column;gap:26px;}
+.skill-category-title{font-size:10px;letter-spacing:.15em;color:var(--amber);text-transform:uppercase;margin-bottom:12px;}
+.tags{display:flex;flex-wrap:wrap;gap:8px;}
+.tag{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:4px;font-size:12px;cursor:default;transition:all .15s;}
+.tag:hover{border-color:var(--green);color:var(--green);background:rgba(74,222,155,.05);transform:translateY(-1px);}
+.skill-bars{display:flex;flex-direction:column;gap:10px;margin-top:24px;}
+.skill-bars-title{font-size:10px;letter-spacing:.15em;color:var(--amber);text-transform:uppercase;margin-bottom:6px;}
+.skill-bar-row{display:grid;grid-template-columns:130px 1fr 36px;align-items:center;gap:12px;}
+.skill-bar-label{font-size:12px;color:var(--text-dim);}
+.skill-bar-track{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;border:1px solid var(--border);}
+.skill-bar-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--green),var(--cyan));width:0%;transition:width 1.2s cubic-bezier(.4,0,.2,1);}
+.skill-bar-pct{font-size:11px;color:var(--text-dimmer);text-align:right;}
+.projects-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:1100px){.projects-grid{grid-template-columns:1fr;}}
+.project-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.project-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--cyan));transform:scaleX(0);transform-origin:left;transition:transform .25s ease;}
+.project-card:hover{border-color:var(--border-lit);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5);}
+.project-card:hover::before,.project-card.starred::before{transform:scaleX(1);}
+.project-card.starred{border-color:var(--green-dim);}
+.project-tag{font-size:10px;letter-spacing:.12em;color:var(--green);text-transform:uppercase;margin-bottom:8px;}
+.project-card.starred .project-tag{color:var(--amber);}
+.project-card.starred .project-tag::before{content:'* ';}
+.project-name{font-family:var(--font-display);font-size:17px;font-weight:700;color:#e8f2ff;margin-bottom:8px;}
+.project-desc{font-size:12px;color:var(--text-dim);line-height:1.65;margin-bottom:14px;}
+.project-tech{display:flex;flex-wrap:wrap;gap:6px;}
+.tech-chip{background:var(--bg);border:1px solid var(--border);color:var(--cyan);font-size:10px;padding:3px 9px;border-radius:3px;}
+.project-expand-hint{font-size:10px;color:var(--text-dimmer);margin-top:10px;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border-lit);border-radius:8px;max-width:620px;width:100%;max-height:80vh;overflow-y:auto;padding:36px;animation:modalIn .25s ease;position:relative;scrollbar-width:thin;scrollbar-color:var(--border-lit) transparent;}
+@keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(8px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:1px solid var(--border);color:var(--text-dim);width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:16px;font-family:var(--font-mono);transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-label{font-size:10px;letter-spacing:.15em;color:var(--green);text-transform:uppercase;margin-bottom:6px;}
+.modal-title{font-family:var(--font-display);font-size:26px;font-weight:800;color:#e8f2ff;margin-bottom:24px;}
+.modal-block{margin-bottom:20px;}
+.modal-block-label{font-size:10px;letter-spacing:.15em;color:var(--amber);text-transform:uppercase;margin-bottom:8px;}
+.modal-block-text{font-size:13px;color:var(--text);line-height:1.7;}
+.modal-tech{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.modal-impact{background:rgba(74,222,155,.05);border:1px solid var(--green-dim);border-radius:4px;padding:14px 16px;font-size:13px;color:var(--green);line-height:1.6;}
+.timeline{display:flex;flex-direction:column;}
+.timeline-item{display:grid;grid-template-columns:20px 1fr;gap:16px;}
+.timeline-spine{display:flex;flex-direction:column;align-items:center;}
+.timeline-dot{width:10px;height:10px;border-radius:50%;background:var(--border);border:2px solid var(--border-lit);flex-shrink:0;margin-top:6px;transition:all .2s;}
+.timeline-item.primary .timeline-dot{background:var(--green);border-color:var(--green);box-shadow:0 0 14px rgba(74,222,155,.5);width:12px;height:12px;}
+.timeline-line{width:1px;flex:1;background:var(--border);min-height:20px;}
+.timeline-content{padding-bottom:28px;cursor:pointer;}
+.timeline-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px;}
+.timeline-role{font-family:var(--font-display);font-size:16px;font-weight:700;color:#e8f2ff;}
+.timeline-item.primary .timeline-role{color:var(--green);}
+.timeline-company{font-size:12px;color:var(--cyan);margin-bottom:2px;}
+.timeline-date{font-size:11px;color:var(--text-dimmer);white-space:nowrap;flex-shrink:0;margin-top:2px;}
+.timeline-expand-hint{font-size:10px;color:var(--text-dimmer);margin-top:4px;}
+.timeline-bullets{display:none;padding-top:10px;flex-direction:column;gap:7px;}
+.timeline-bullets.open{display:flex;}
+.timeline-bullet{font-size:12.5px;color:var(--text-dim);line-height:1.6;padding-left:14px;position:relative;}
+.timeline-bullet::before{content:'>';position:absolute;left:0;color:var(--green);}
+.achieve-grid{display:flex;flex-direction:column;gap:12px;}
+.achieve-card{display:grid;grid-template-columns:48px 1fr;gap:16px;align-items:start;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:18px;transition:all .15s;}
+.achieve-card:hover{border-color:var(--border-lit);transform:translateX(4px);}
+.achieve-icon{width:48px;height:48px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.achieve-title{font-size:15px;font-weight:600;color:#e8f2ff;margin-bottom:3px;font-family:var(--font-display);}
+.achieve-org{font-size:11px;color:var(--amber);margin-bottom:4px;}
+.achieve-desc{font-size:12.5px;color:var(--text-dim);line-height:1.6;}
+.contact-cta{font-size:32px;font-family:var(--font-display);font-weight:800;color:#e8f2ff;margin-bottom:8px;}
+.contact-cta span{color:var(--green);}
+.contact-intro{font-size:13.5px;color:var(--text-dim);line-height:1.8;max-width:480px;margin-bottom:32px;}
+.contact-links{display:flex;flex-direction:column;gap:10px;margin-bottom:36px;}
+.contact-link{display:flex;align-items:center;gap:14px;text-decoration:none;padding:14px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;transition:all .15s;max-width:400px;}
+.contact-link:hover{border-color:var(--green);transform:translateX(6px);}
+.contact-link-icon{font-size:18px;width:24px;text-align:center;}
+.contact-link-label{font-size:10px;color:var(--text-dimmer);letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:2px;}
+.contact-link-val{font-size:13px;color:var(--text);}
+.cli-demo-terminal{background:#070a0e;border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:580px;}
+.cli-demo-bar{background:var(--bg3);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:8px;}
+.cli-demo-body{padding:20px;font-size:12.5px;line-height:1.8;min-height:300px;max-height:380px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border-lit) transparent;}
+.progress-bar-wrap{display:inline-block;background:var(--bg3);border:1px solid var(--border);border-radius:2px;width:180px;height:10px;overflow:hidden;vertical-align:middle;margin:0 8px;}
+.progress-bar-inner{height:100%;background:linear-gradient(90deg,var(--green),var(--cyan));width:0%;transition:width .12s linear;}
+.cli-btn-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.cli-run-btn{background:rgba(74,222,155,.08);border:1px solid var(--green);color:var(--green);padding:9px 20px;border-radius:4px;font-size:12px;font-family:var(--font-mono);cursor:pointer;transition:all .15s;}
+.cli-run-btn:hover{background:rgba(74,222,155,.18);}
+.cli-run-btn:disabled{opacity:.5;cursor:not-allowed;}
+.cli-run-btn.secondary{border-color:var(--border);color:var(--text-dim);background:transparent;}
+.cli-run-btn.secondary:hover{border-color:var(--cyan);color:var(--cyan);}
+.konami-display{background:linear-gradient(135deg,rgba(160,124,255,.08),rgba(56,196,224,.08));border:1px solid var(--purple);border-radius:8px;padding:28px;max-width:520px;}
+.konami-title{font-family:var(--font-display);font-size:22px;font-weight:800;color:var(--purple);margin-bottom:12px;}
+#toast{position:fixed;bottom:24px;right:24px;z-index:9000;background:var(--bg3);border:1px solid var(--green);border-radius:6px;padding:12px 20px;font-size:12px;color:var(--green);font-family:var(--font-mono);transform:translateY(80px);opacity:0;transition:all .3s ease;pointer-events:none;max-width:320px;line-height:1.5;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.warn{border-color:var(--amber);color:var(--amber);}
+#boot-screen{position:fixed;inset:0;background:var(--bg);z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;color:var(--text-dim);transition:opacity .6s ease;}
+#boot-screen.hidden{opacity:0;pointer-events:none;}
+.boot-lines{text-align:left;width:340px;}
+.boot-line{display:block;margin-bottom:6px;opacity:0;animation:bootFade .4s ease forwards;}
+.boot-line:nth-child(1){animation-delay:.1s;}.boot-line:nth-child(2){animation-delay:.5s;}.boot-line:nth-child(3){animation-delay:.9s;}.boot-line:nth-child(4){animation-delay:1.3s;}.boot-line:nth-child(5){animation-delay:1.7s;color:var(--green);}
+@keyframes bootFade{from{opacity:0;transform:translateX(-8px);}to{opacity:1;transform:translateX(0);}}
+.boot-cursor{display:inline-block;width:8px;height:13px;background:var(--green);vertical-align:middle;animation:blink .8s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+/* fun-commands hint panel */
+.hint-panel{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:16px 20px;max-width:540px;margin-top:28px;}
+.hint-panel-title{font-size:10px;letter-spacing:.15em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;}
+.hint-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.hint-chip{background:var(--bg);border:1px solid var(--border);color:var(--text-dim);font-size:11px;padding:4px 12px;border-radius:3px;cursor:pointer;transition:all .15s;font-family:var(--font-mono);}
+.hint-chip:hover{border-color:var(--cyan);color:var(--cyan);}
+.hint-chip.secret{border-color:var(--amber-dim);color:var(--amber);}
+.hint-chip.secret:hover{border-color:var(--amber);}
+</style>
+</head>
+<body>
+<div id="boot-screen">
+  <div class="boot-lines">
+    <span class="boot-line" style="color:var(--text-dimmer)">&gt; Initializing portfolio...</span>
+    <span class="boot-line" style="color:var(--text-dimmer)">&gt; Loading backend modules...</span>
+    <span class="boot-line" style="color:var(--text-dimmer)">&gt; Authenticating identity...</span>
+    <span class="boot-line" style="color:var(--text-dimmer)">&gt; Mounting systems...</span>
+    <span class="boot-line">&gt; Ready. <span class="boot-cursor"></span></span>
+  </div>
+</div>
+<div id="toast"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal"><button class="modal-close" onclick="closeModal(null,true)">x</button><div id="modal-content"></div></div>
+</div>
+<div class="layout">
+  <aside class="terminal-pane">
+    <div class="terminal-titlebar">
+      <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+      <div class="terminal-title">drishti@portfolio ~ zsh</div>
+    </div>
+    <div class="terminal-body" id="terminal-body">
+      <span class="t-line" style="color:var(--text-dimmer)">&gt; Ready.</span>
+      <span class="t-line">&nbsp;</span>
+      <span class="t-line t-comment"># Tab autocomplete  |  Up/Down history</span>
+      <span class="t-line t-comment"># type 'help' to see all commands</span>
+      <span class="t-line">&nbsp;</span>
+      <span class="t-line"><span class="t-prompt">drishti@portfolio</span><span class="t-dim">:~$</span> <span class="t-cmd">help</span></span>
+      <span class="t-line">&nbsp;</span>
+      <span class="t-section-header">Commands:</span>
+      <span class="t-line">&nbsp;</span>
+      <span class="t-item"><span style="color:var(--cyan)">about</span>        &rarr; Who I am</span>
+      <span class="t-item"><span style="color:var(--cyan)">skills</span>       &rarr; Tech stack</span>
+      <span class="t-item"><span style="color:var(--cyan)">projects</span>     &rarr; Things I've built</span>
+      <span class="t-item"><span style="color:var(--cyan)">experience</span>   &rarr; Work history</span>
+      <span class="t-item"><span style="color:var(--cyan)">achievements</span> &rarr; Awards</span>
+      <span class="t-item"><span style="color:var(--cyan)">contact</span>      &rarr; Get in touch</span>
+      <span class="t-item"><span style="color:var(--amber)">run cli-demo</span> &rarr; Live CLI sim</span>
+      <span class="t-item"><span style="color:var(--text-dimmer)">fun          &rarr; discover easter eggs</span></span>
+      <span class="t-line">&nbsp;</span>
+    </div>
+    <div class="terminal-input-row" id="input-row">
+      <div id="suggestions"></div>
+      <span class="t-prompt-label">drishti@portfolio:~$</span>
+      <div class="input-wrapper">
+        <div id="autocomplete-ghost"></div>
+        <input type="text" id="terminal-input" placeholder="type a command..." autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <div class="status-bar">
+      <strong>&#9679; READY</strong>
+      <span id="status-section">~</span>
+      <span class="status-time" id="status-time"></span>
+    </div>
+  </aside>
+  <main class="visual-pane" id="visual-pane">
+    <div class="nav-bar">
+      <span class="nav-bar-crumb" onclick="navigate('splash')">~/drishti</span>
+      <span class="nav-bar-sep" id="nav-sep" style="display:none">/</span>
+      <span class="nav-bar-crumb active" id="nav-current"></span>
+      <div class="nav-bar-right">
+        <span class="nav-bar-cmd" onclick="navigate('projects')">projects</span>
+        <span class="nav-bar-cmd" onclick="navigate('contact')">contact</span>
+        <span class="nav-bar-cmd" style="color:var(--amber);border-color:var(--amber-dim)" onclick="navigate('cli')">&#9654; demo</span>
+      </div>
+    </div>
+    <!-- SPLASH -->
+    <section id="section-splash">
+      <div class="splash-greeting">// portfolio v2.0</div>
+      <div class="splash-name">Drishti<span>.</span></div>
+      <div class="splash-role">Associate Software Developer @ <strong>Ericsson</strong></div>
+      <div class="splash-tagline">"I build systems that are structured, scalable, and actually useful."</div>
+      <div class="splash-hint">&#8592; <span>Type a command</span> in the terminal &nbsp;&middot;&nbsp; or click a section below</div>
+      <div class="nav-pills">
+        <div class="nav-pill" onclick="navigate('about')">about</div>
+        <div class="nav-pill" onclick="navigate('skills')">skills</div>
+        <div class="nav-pill" onclick="navigate('projects')">projects</div>
+        <div class="nav-pill" onclick="navigate('experience')">experience</div>
+        <div class="nav-pill" onclick="navigate('achievements')">achievements</div>
+        <div class="nav-pill" onclick="navigate('contact')">contact</div>
+        <div class="nav-pill featured" onclick="navigate('cli')">&#9654; run cli-demo</div>
+      </div>
+      <!-- Fun commands hint panel -->
+      <div class="hint-panel">
+        <div class="hint-panel-title">&#128073; Try these in the terminal</div>
+        <div class="hint-chips">
+          <span class="hint-chip" onclick="runHint('whoami')">whoami</span>
+          <span class="hint-chip" onclick="runHint('git log')">git log</span>
+          <span class="hint-chip" onclick="runHint('coffee')">coffee</span>
+          <span class="hint-chip" onclick="runHint('vim')">vim</span>
+          <span class="hint-chip" onclick="runHint('sudo su')">sudo su</span>
+          <span class="hint-chip" onclick="runHint('uname')">uname</span>
+          <span class="hint-chip" onclick="runHint('ls')">ls</span>
+          <span class="hint-chip" onclick="runHint('pwd')">pwd</span>
+          <span class="hint-chip" onclick="runHint('date')">date</span>
+          <span class="hint-chip" onclick="runHint('hack')">hack</span>
+          <span class="hint-chip" onclick="runHint('ping drishti')">ping drishti</span>
+          <span class="hint-chip" onclick="runHint('fortune')">fortune</span>
+          <span class="hint-chip" onclick="runHint('matrix')">matrix</span>
+          <span class="hint-chip secret" onclick="runHint('secret')">&#128065; secret</span>
+        </div>
+      </div>
+    </section>
+    <!-- ABOUT -->
+    <section id="section-about" class="vsection">
+      <div class="section-label">// whoami</div>
+      <div class="section-title">About <span>Me</span></div>
+      <div class="about-text">
+        <p>Results-driven backend developer with hands-on experience building systems that actually matter — from telecom data pipelines at Ericsson to ML-powered prediction tools.</p>
+        <p>I care about clean logic, strong ownership, and automation that others can rely on. I've worked end-to-end across backend architecture, SQL systems, CLI tooling, and ML integration.</p>
+        <p>Currently at <strong style="color:var(--cyan)">Ericsson</strong>, contributing to a Data Transformation POC and supporting live telecom clients. Previously at HighRadius and Feynn Labs building ML-integrated systems.</p>
+      </div>
+      <div class="about-stat-grid">
+        <div class="stat-card"><div class="stat-num" data-count="40">0</div><div class="stat-label">% SQL efficiency gain</div></div>
+        <div class="stat-card"><div class="stat-num" data-count="4">0</div><div class="stat-label">production-grade projects</div></div>
+        <div class="stat-card"><div class="stat-num" data-float="9.44">0</div><div class="stat-label">B.Tech CGPA</div></div>
+      </div>
+      <div class="about-links">
+        <a href="https://github.com/Drishti228" target="_blank" class="link-btn">&#9649; GitHub</a>
+        <a href="https://www.linkedin.com/in/sdev-drishti" target="_blank" class="link-btn">&#9672; LinkedIn</a>
+      </div>
+    </section>
+    <!-- SKILLS -->
+    <section id="section-skills" class="vsection">
+      <div class="section-label">// tech-stack</div>
+      <div class="section-title">Skills<span> &amp;</span> Tools</div>
+      <div class="skills-grid">
+        <div><div class="skill-category-title">Backend &amp; APIs</div><div class="tags"><span class="tag">Python</span><span class="tag">REST APIs</span><span class="tag">JWT Auth</span><span class="tag">Azure AD SSO</span><span class="tag">JavaScript</span></div></div>
+        <div><div class="skill-category-title">Data &amp; ML</div><div class="tags"><span class="tag">Pandas</span><span class="tag">NumPy</span><span class="tag">scikit-learn</span><span class="tag">matplotlib</span><span class="tag">seaborn</span><span class="tag">Plotly</span><span class="tag">Tableau</span></div></div>
+        <div><div class="skill-category-title">Databases</div><div class="tags"><span class="tag">MySQL</span><span class="tag">OracleDB</span><span class="tag">SQL Scripting</span><span class="tag">Data Extraction</span></div></div>
+        <div><div class="skill-category-title">Tools &amp; Platforms</div><div class="tags"><span class="tag">Git</span><span class="tag">Ericsson ECM</span><span class="tag">Ericsson EOC</span><span class="tag">JIRA</span><span class="tag">Anaconda</span><span class="tag">ReactJS</span><span class="tag">Agile</span></div></div>
+      </div>
+      <div class="skill-bars">
+        <div class="skill-bars-title">Proficiency</div>
+        <div class="skill-bar-row"><span class="skill-bar-label">Python</span><div class="skill-bar-track"><div class="skill-bar-fill" data-pct="92"></div></div><span class="skill-bar-pct">92%</span></div>
+        <div class="skill-bar-row"><span class="skill-bar-label">SQL</span><div class="skill-bar-track"><div class="skill-bar-fill" data-pct="88"></div></div><span class="skill-bar-pct">88%</span></div>
+        <div class="skill-bar-row"><span class="skill-bar-label">REST APIs</span><div class="skill-bar-track"><div class="skill-bar-fill" data-pct="85"></div></div><span class="skill-bar-pct">85%</span></div>
+        <div class="skill-bar-row"><span class="skill-bar-label">ML / Data</span><div class="skill-bar-track"><div class="skill-bar-fill" data-pct="78"></div></div><span class="skill-bar-pct">78%</span></div>
+        <div class="skill-bar-row"><span class="skill-bar-label">ECM / Telecom</span><div class="skill-bar-track"><div class="skill-bar-fill" data-pct="80"></div></div><span class="skill-bar-pct">80%</span></div>
+      </div>
+    </section>
+    <!-- PROJECTS -->
+    <section id="section-projects" class="vsection">
+      <div class="section-label">// deployed systems</div>
+      <div class="section-title">Things I've <span>Built</span></div>
+      <div class="projects-grid">
+        <div class="project-card starred" onclick="openProject('cli')">
+          <div class="project-tag">ericsson internal</div>
+          <div class="project-name">CLI Auth Tool</div>
+          <div class="project-desc">Backend features &amp; components for a multi-developer CLI tool — SSO, JWT auth, REST APIs including delete endpoints for user-uploaded data management.</div>
+          <div class="project-tech"><span class="tech-chip">Python</span><span class="tech-chip">Azure AD</span><span class="tech-chip">JWT</span><span class="tech-chip">REST APIs</span><span class="tech-chip">Backend</span></div>
+          <div class="project-expand-hint">&#8599; click to inspect</div>
+        </div>
+
+        <div class="project-card" onclick="openProject('invoice')">
+          <div class="project-tag">ml system</div>
+          <div class="project-name">AI Invoice Management</div>
+          <div class="project-desc">ML model predicting delayed payments, integrated with preprocessing pipeline and a ReactJS dashboard.</div>
+          <div class="project-tech"><span class="tech-chip">Python</span><span class="tech-chip">scikit-learn</span><span class="tech-chip">ReactJS</span></div>
+          <div class="project-expand-hint">&#8599; click to inspect</div>
+        </div>
+        <div class="project-card" onclick="openProject('demand')">
+          <div class="project-tag">ml — feynn labs</div>
+          <div class="project-name">Demand Forecasting Model</div>
+          <div class="project-desc">Restaurant industry demand prediction using Python and ML, presented via Tableau and Plotly for business decisions.</div>
+          <div class="project-tech"><span class="tech-chip">Python</span><span class="tech-chip">Pandas</span><span class="tech-chip">scikit-learn</span><span class="tech-chip">Tableau</span></div>
+          <div class="project-expand-hint">&#8599; click to inspect</div>
+        </div>
+      </div>
+    </section>
+    <!-- EXPERIENCE -->
+    <section id="section-experience" class="vsection">
+      <div class="section-label">// work history</div>
+      <div class="section-title">Where I've <span>Worked</span></div>
+      <div class="timeline">
+        <div class="timeline-item primary" onclick="toggleTimeline(this)">
+          <div class="timeline-spine"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+          <div class="timeline-content">
+            <div class="timeline-header"><div><div class="timeline-role">Associate Software Developer</div><div class="timeline-company">Ericsson</div></div><div class="timeline-date">Aug 2024 &ndash; Present</div></div>
+            <div class="timeline-expand-hint">&#8595; click to expand</div>
+            <div class="timeline-bullets">
+              <div class="timeline-bullet">Led backend development for Data Transformation POC — designed core architecture and service backbone.</div>
+              <div class="timeline-bullet">Built CLI prototype with SSO (Azure AD) + JWT for secure API interaction.</div>
+              <div class="timeline-bullet">Automated SQL scripts — reduced manual effort by 40%.</div>
+              <div class="timeline-bullet">Optimized system workflows for urgent and ADHOC request latency.</div>
+              <div class="timeline-bullet">Collaborated with Order Care and Testing teams for telecom solution delivery.</div>
+              <div class="timeline-bullet">Awarded Silver Star Employee Award 2024 for outstanding automation contributions.</div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item" onclick="toggleTimeline(this)">
+          <div class="timeline-spine"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+          <div class="timeline-content">
+            <div class="timeline-header"><div><div class="timeline-role">Development Intern</div><div class="timeline-company">Ericsson</div></div><div class="timeline-date">Jan 2024 &ndash; Aug 2024</div></div>
+            <div class="timeline-expand-hint">&#8595; click to expand</div>
+            <div class="timeline-bullets">
+              <div class="timeline-bullet">Built Interns List Management System using Python and REST APIs.</div>
+              <div class="timeline-bullet">Performed ECM configurations and SQL queries for daily development support.</div>
+              <div class="timeline-bullet">Trained on Ericsson Catalog Manager (ECM) and Ericsson Order Care (EOC).</div>
+              <div class="timeline-bullet">Assisted Mobily (Etihad Etisalat) team during training sessions.</div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item" onclick="toggleTimeline(this)">
+          <div class="timeline-spine"><div class="timeline-dot"></div><div class="timeline-line"></div></div>
+          <div class="timeline-content">
+            <div class="timeline-header"><div><div class="timeline-role">Development Intern</div><div class="timeline-company">HighRadius Corporation</div></div><div class="timeline-date">Feb 2022 &ndash; May 2022</div></div>
+            <div class="timeline-expand-hint">&#8595; click to expand</div>
+            <div class="timeline-bullets">
+              <div class="timeline-bullet">Built AI-based Invoice Management System predicting delayed payments via ML.</div>
+              <div class="timeline-bullet">Data preprocessing, feature engineering, and model tuning for aging buckets.</div>
+              <div class="timeline-bullet">Backend services using JDBC and Servlets; ML output integrated into ReactJS dashboard.</div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item" onclick="toggleTimeline(this)">
+          <div class="timeline-spine"><div class="timeline-dot"></div></div>
+          <div class="timeline-content">
+            <div class="timeline-header"><div><div class="timeline-role">ML Intern</div><div class="timeline-company">Feynn Labs</div></div><div class="timeline-date">Nov 2021 &ndash; Feb 2022</div></div>
+            <div class="timeline-expand-hint">&#8595; click to expand</div>
+            <div class="timeline-bullets">
+              <div class="timeline-bullet">Built demand forecasting model for restaurant industry using Python, pandas, scikit-learn.</div>
+              <div class="timeline-bullet">Presented findings with Tableau, Plotly, and seaborn.</div>
+              <div class="timeline-bullet">Project selected for CEO business plan review for real-world applicability.</div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item" onclick="toggleTimeline(this)">
+          <div class="timeline-spine"><div class="timeline-dot"></div></div>
+          <div class="timeline-content">
+            <div class="timeline-header"><div><div class="timeline-role">Undergraduate Researcher</div><div class="timeline-company">K.S.A.S</div></div><div class="timeline-date">Sept 2019 &ndash; May 2022</div></div>
+            <div class="timeline-expand-hint">&#8595; click to expand</div>
+            <div class="timeline-bullets">
+              <div class="timeline-bullet">Conducted cross-border research on crowdsourcing models and digital inclusion in underdeveloped regions.</div>
+              <div class="timeline-bullet">Developed a community website to report and track issues in water, education, and health sectors.</div>
+              <div class="timeline-bullet">Collaborated with researchers from Myanmar, Bangladesh, Finland, and the UK, supporting global outreach and impact.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- ACHIEVEMENTS -->
+    <section id="section-achievements" class="vsection">
+      <div class="section-label">// recognition</div>
+      <div class="section-title">High<span>lights</span></div>
+      <div class="achieve-grid">
+        <div class="achieve-card"><div class="achieve-icon">&#11088;</div><div><div class="achieve-title">Silver Star Employee Award</div><div class="achieve-org">Ericsson &middot; 2024</div><div class="achieve-desc">Awarded for outstanding performance and contribution to automation projects.</div></div></div>
+        <div class="achieve-card"><div class="achieve-icon">&#9992;&#65039;</div><div><div class="achieve-title">Finland-Asia Student Exchange</div><div class="achieve-org">Laurea University, Helsinki &middot; 2022</div><div class="achieve-desc">Travelled to Finland under the Finland-Asia Exchange Programme, where I collaborated with Laurea University and met Arvind Sharma, who later provided a strong Letter of Recommendation.</div></div></div>
+        <div class="achieve-card"><div class="achieve-icon">&#128196;</div><div><div class="achieve-title">Published Research</div><div class="achieve-org">Laurea University &middot; 2022</div><div class="achieve-desc">"An evaluation of the impact of crowdsourcing in women's involvement on sustainable rural water supply in India."</div></div></div>
+        <div class="achieve-card"><div class="achieve-icon">&#127891;</div><div><div class="achieve-title">B.Tech — CGPA 9.44</div><div class="achieve-org">KIIT University, Odisha &middot; 2019–2023</div><div class="achieve-desc">Computer Science and Systems Engineering. Consistent academic excellence throughout.</div></div></div>
+        <div class="achieve-card"><div class="achieve-icon">&#128172;</div><div><div class="achieve-title">Letters of Recommendation</div><div class="achieve-org">Industry &amp; Academia</div><div class="achieve-desc">Sanjay Basumatary (CEO, Feynn Labs) — based on ML internship work. Arvind Sharma (Senior Lecturer, Laurea University, Finland) — met during the Finland-Asia Exchange Programme.</div></div></div>
+      </div>
+    </section>
+    <!-- CONTACT -->
+    <section id="section-contact" class="vsection">
+      <div class="section-label">// get-in-touch</div>
+      <div class="section-title">Contact<span>.</span></div>
+      <div class="contact-cta">Let's build something <span>impactful.</span></div>
+      <div class="contact-intro" style="margin-top:16px">Open to new opportunities, collaborations, and interesting engineering challenges.</div>
+      <div class="contact-links" style="margin-top:24px">
+        <a href="https://github.com/Drishti228" target="_blank" class="contact-link"><span class="contact-link-icon">&#9649;</span><div><span class="contact-link-label">GitHub</span><span class="contact-link-val">github.com/Drishti228</span></div></a>
+        <a href="https://www.linkedin.com/in/sdev-drishti" target="_blank" class="contact-link"><span class="contact-link-icon">&#9672;</span><div><span class="contact-link-label">LinkedIn</span><span class="contact-link-val">linkedin.com/in/sdev-drishti</span></div></a>
+      </div>
+    </section>
+    <!-- CLI DEMO -->
+    <section id="section-cli" class="vsection">
+      <div class="section-label">// interactive demo</div>
+      <div class="section-title">CLI <span>Demo</span></div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:24px;max-width:500px">Live simulation of the CLI auth tool I built at Ericsson. Pick a scenario.</p>
+      <div class="cli-demo-terminal">
+        <div class="cli-demo-bar">
+          <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+          <span style="font-size:11px;color:var(--text-dimmer);margin-left:8px">drishti-cli v1.0</span>
+          <span id="cli-status" style="margin-left:auto;font-size:10px;color:var(--text-dimmer)">IDLE</span>
+        </div>
+        <div class="cli-demo-body" id="cli-demo-body">
+          <span id="cli-output">
+            <span class="t-line t-comment"># Select a scenario to run</span>
+            <span class="t-line t-dim">&gt; drishti-cli --help</span>
+            <span class="t-line">&nbsp;</span>
+            <span class="t-line t-bright">Usage: drishti-cli &lt;command&gt; [options]</span>
+            <span class="t-line">&nbsp;</span>
+            <span class="t-item"><span style="color:var(--cyan)">upload</span>  Authenticated file upload</span>
+            <span class="t-item"><span style="color:var(--cyan)">query</span>   Query API endpoint</span>
+            <span class="t-item"><span style="color:var(--cyan)">status</span>  Check auth status</span>
+            <span class="t-line">&nbsp;</span>
+          </span>
+        </div>
+      </div>
+      <div class="cli-btn-row">
+        <button class="cli-run-btn" onclick="runCliDemo('upload')">&#9654; Upload Demo</button>
+        <button class="cli-run-btn secondary" onclick="runCliDemo('query')">&#9654; Query Demo</button>
+        <button class="cli-run-btn secondary" onclick="runCliDemo('status')">&#9654; Auth Status</button>
+      </div>
+    </section>
+    <!-- SECRET -->
+    <section id="section-secret" class="vsection">
+      <div class="section-label">// you found it</div>
+      <div class="section-title">Easter <span>Egg</span></div>
+      <div class="konami-display">
+        <div class="konami-title">You are a real one.</div>
+        <p style="font-size:13px;color:var(--text-dim);line-height:1.8;margin-top:12px">
+          Only curious people who explore actually find this page.<br><br>
+          Fun fact: I once debugged a production SQL workflow at 11pm from my phone because I could not stop thinking about an edge case. It worked. Clean logic matters more than clean hours.<br><br>
+          <span style="color:var(--purple)">If you are reading this — you are probably the kind of person I would love to work with.</span><br><br>
+          &rarr; <a href="https://www.linkedin.com/in/sdev-drishti" target="_blank" style="color:var(--cyan);text-decoration:none">linkedin.com/in/sdev-drishti</a>
+        </p>
+      </div>
+    </section>
+  </main>
+</div>
+<script>
+// ══ PROJECTS DATA ══
+var PROJ = {
+  'cli': {
+    label: 'Ericsson Internal',
+    name: 'CLI Authentication Tool',
+    problem: 'Internal developers needed a secure, standardised way to interact with protected APIs — covering uploads, data queries, and deletion of user-uploaded records.',
+    solution: 'Collaborated with 3 other developers to build backend features and components for a CLI tool. Implemented SSO (Azure AD) + JWT authentication flows, REST API integrations including DELETE endpoints to manage user-uploaded data, and core backend logic for secure API interactions.',
+    tech: ['Python', 'Azure AD SSO', 'JWT', 'REST APIs', 'Backend', 'CLI'],
+    impact: 'Delivered a secure, multi-feature CLI tool used internally at Ericsson. Enabled authenticated data management workflows including deletion of user records via API, improving team developer efficiency.'
+  },
+  'invoice': {
+    label: 'ML System — HighRadius',
+    name: 'AI Invoice Management System',
+    problem: 'Predicting which invoices would be paid late was a manual, error-prone process with no systematic approach.',
+    solution: 'Built an ML pipeline predicting delayed payments by aging bucket — data preprocessing, feature engineering, and model tuning, integrated into a ReactJS dashboard.',
+    tech: ['Python', 'scikit-learn', 'JDBC', 'Servlets', 'ReactJS'],
+    impact: 'Improved payment prediction accuracy; delivered an integrated dashboard enabling finance teams to act proactively on at-risk invoices.'
+  },
+  'demand': {
+    label: 'ML Project — Feynn Labs',
+    name: 'Demand Forecasting Model',
+    problem: 'Restaurant businesses lacked data-driven tools to forecast demand, leading to inventory inefficiencies.',
+    solution: 'Built a demand forecasting ML model using Python, pandas, and scikit-learn. Presented insights through Tableau, Plotly, and seaborn visualizations.',
+    tech: ['Python', 'Pandas', 'scikit-learn', 'Tableau', 'Plotly', 'seaborn'],
+    impact: 'Project selected by Feynn Labs CEO for business plan review due to its real-world market applicability.'
+  }
+};
+
+// ══ ALL COMMANDS for autocomplete ══
+var ALL_CMDS = [
+  {cmd:'about',       desc:'Who I am'},
+  {cmd:'skills',      desc:'Tech stack'},
+  {cmd:'projects',    desc:'Things I built'},
+  {cmd:'experience',  desc:'Work history'},
+  {cmd:'achievements',desc:'Awards'},
+  {cmd:'contact',     desc:'Get in touch'},
+  {cmd:'run cli-demo',desc:'Live CLI simulation'},
+  {cmd:'fun',         desc:'Discover easter eggs'},
+  {cmd:'help',        desc:'Show commands'},
+  {cmd:'whoami',      desc:'Quick intro'},
+  {cmd:'clear',       desc:'Clear terminal'},
+  {cmd:'ls',          desc:'List sections'},
+  {cmd:'pwd',         desc:'Current path'},
+  {cmd:'git log',     desc:'Commit history'},
+  {cmd:'git status',  desc:'Working tree'},
+  {cmd:'git blame',   desc:'Who wrote this?'},
+  {cmd:'date',        desc:'Current date'},
+  {cmd:'uname',       desc:'System info'},
+  {cmd:'uptime',      desc:'How long running'},
+  {cmd:'coffee',      desc:'Brew coffee'},
+  {cmd:'vim',         desc:'Good luck exiting'},
+  {cmd:'nano',        desc:'The sensible editor'},
+  {cmd:'sudo su',     desc:'Nice try'},
+  {cmd:'hack',        desc:'...'},
+  {cmd:'ping drishti',desc:'Check if alive'},
+  {cmd:'fortune',     desc:'Wisdom'},
+  {cmd:'matrix',      desc:'Follow the white rabbit'},
+  {cmd:'secret',      desc:'???'},
+  {cmd:'exit',        desc:'No escape'},
+  {cmd:'hello',       desc:'Say hi'},
+  {cmd:'hi',          desc:'Say hi'},
+  {cmd:'cat resume',  desc:'Read resume'},
+  {cmd:'man drishti', desc:'Manual page'}
+];
+
+// ══ STATE ══
+var cmdHistory = [], histIdx = -1, sugIdx = -1, curSugs = [];
+var inp = null, ghost = null, sugBox = null;
+
+// ══ BOOT ══
+window.addEventListener('load', function() {
+  inp    = document.getElementById('terminal-input');
+  ghost  = document.getElementById('autocomplete-ghost');
+  sugBox = document.getElementById('suggestions');
+  updateClock();
+  setInterval(updateClock, 1000);
+  setTimeout(function() {
+    var bs = document.getElementById('boot-screen');
+    bs.classList.add('hidden');
+    setTimeout(function(){ bs.remove(); }, 700);
+    inp.focus();
+  }, 2400);
+  initInputHandlers();
+  initKonami();
+});
+
+function updateClock() {
+  var el = document.getElementById('status-time');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit'});
+}
+
+// ══ NAVIGATE — always scrolls visual pane to top ══
+function navigate(section) {
+  // Hide all
+  var all = document.querySelectorAll('[id^="section-"]');
+  for (var i = 0; i < all.length; i++) {
+    all[i].style.display = 'none';
+    all[i].classList.remove('active');
+  }
+  var target = document.getElementById('section-' + section);
+  if (!target) return;
+
+  // Show with correct display type
+  target.style.display = (section === 'splash') ? 'flex' : 'block';
+  // Force reflow for animation
+  void target.offsetWidth;
+  target.classList.add('active');
+
+  // Scroll to top instantly
+  var vp = document.getElementById('visual-pane');
+  vp.scrollTop = 0;
+
+  // Update breadcrumb
+  var crumb = document.getElementById('nav-current');
+  var sep   = document.getElementById('nav-sep');
+  if (section === 'splash') {
+    crumb.textContent = '';
+    sep.style.display = 'none';
+  } else {
+    crumb.textContent = section;
+    sep.style.display = '';
+  }
+  document.getElementById('status-section').textContent = (section === 'splash') ? '~' : '~/' + section;
+
+  // Trigger section-specific animations
+  if (section === 'skills')  setTimeout(animateSkillBars, 150);
+  if (section === 'about')   setTimeout(animateCounters, 150);
+
+  if (section !== 'splash') {
+    appendLine('<span class="t-dim">&#8594; navigated to <span style="color:var(--cyan)">' + section + '</span></span>');
+  }
+  if (inp) inp.focus();
+}
+
+// ══ TERMINAL HELPERS ══
+function appendTerminal(html) {
+  var b = document.getElementById('terminal-body');
+  var d = document.createElement('div');
+  d.innerHTML = html;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
+function appendLine(html) {
+  appendTerminal('<span class="t-line">' + html + '</span>');
+}
+
+// ══ COMMAND HANDLERS ══
+function handleCommand(raw) {
+  var cmd = raw.trim().toLowerCase();
+  if (!cmd) return;
+  cmdHistory.unshift(raw.trim());
+  if (cmdHistory.length > 50) cmdHistory.pop();
+  histIdx = -1;
+  appendLine('<span class="t-prompt">drishti@portfolio</span><span class="t-dim">:~$</span> <span class="t-cmd">' + esc(raw.trim()) + '</span>');
+
+  // cat with argument
+  if (cmd.indexOf('cat ') === 0) { cmdCat(cmd.slice(4).trim()); return; }
+  // man with argument
+  if (cmd.indexOf('man ') === 0) { cmdMan(cmd.slice(4).trim()); return; }
+
+  var handler = CMDS[cmd];
+  if (handler) {
+    handler();
+  } else {
+    appendLine('<span class="t-error">command not found: ' + esc(cmd) + '</span>');
+    var close = null;
+    for (var i = 0; i < ALL_CMDS.length; i++) {
+      if (ALL_CMDS[i].cmd[0] === cmd[0] && lev(cmd, ALL_CMDS[i].cmd) <= 3) { close = ALL_CMDS[i]; break; }
+    }
+    if (close) appendLine('<span class="t-dim">Did you mean <span style="color:var(--cyan)">' + close.cmd + '</span>?</span>');
+    appendLine('');
+  }
+}
+
+var CMDS = {
+  'help': function() {
+    appendLine('');
+    appendLine('<span class="t-section-header">Navigation:</span>');
+    appendLine('');
+    var navs = ['about','skills','projects','experience','achievements','contact'];
+    for (var i = 0; i < navs.length; i++)
+      appendLine('<span class="t-item"><span style="color:var(--cyan)">' + navs[i] + '</span></span>');
+    appendLine('<span class="t-item"><span style="color:var(--amber)">run cli-demo</span></span>');
+    appendLine('');
+    appendLine('<span class="t-section-header">Utilities:</span>');
+    appendLine('');
+    appendLine('<span class="t-item"><span style="color:var(--text-dimmer)">whoami, ls, clear, pwd, date, uname, uptime, git log, git status, git blame</span></span>');
+    appendLine('<span class="t-item"><span style="color:var(--text-dimmer)">coffee, vim, nano, ping drishti, fortune, matrix, man drishti, cat resume, hack, sudo su</span></span>');
+    appendLine('');
+    appendLine('<span class="t-comment"># Hint: type \'fun\' to see easter eggs</span>');
+    appendLine('');
+  },
+  'about':        function(){ navigate('about'); },
+  'skills':       function(){ navigate('skills'); },
+  'projects':     function(){ navigate('projects'); },
+  'experience':   function(){ navigate('experience'); },
+  'achievements': function(){ navigate('achievements'); },
+  'contact':      function(){ navigate('contact'); },
+  'run cli-demo': function(){ navigate('cli'); },
+  'cli-demo':     function(){ navigate('cli'); },
+  'secret':       function(){ navigate('secret'); appendLine(''); appendLine('<span class="t-purple">Easter egg unlocked.</span>'); appendLine(''); },
+  'fun':          function(){
+    appendLine('');
+    appendLine('<span class="t-amber">Fun commands to try:</span>');
+    appendLine('');
+    var funs = ['coffee','vim','nano','git log','git status','git blame','ping drishti','fortune','matrix','uname','uptime','sudo su','hack','man drishti','cat resume','secret'];
+    for (var i = 0; i < funs.length; i++)
+      appendLine('<span class="t-item"><span style="color:var(--cyan)">' + funs[i] + '</span></span>');
+    appendLine('');
+    appendLine('<span class="t-comment"># Psst: try the Konami code on your keyboard!</span>');
+    appendLine('');
+  },
+  'clear':        function(){ document.getElementById('terminal-body').innerHTML = ''; },
+  'whoami':       function(){
+    appendLine('');
+    appendLine('<span class="t-green">Drishti</span> — Associate Software Developer @ <span class="t-cyan">Ericsson</span>');
+    appendLine('<span class="t-dim">Backend | Automation | ML | Telecom</span>');
+    appendLine('<span class="t-dim">Silver Star Award 2024 | CGPA 9.44 | Finland Exchange 2022</span>');
+    appendLine('');
+  },
+  'ls':           function(){
+    appendLine('');
+    var dirs = ['about','skills','projects','experience','achievements','contact','cli'];
+    for (var i = 0; i < dirs.length; i++) appendLine('<span style="color:var(--cyan)">' + dirs[i] + '/</span>');
+    appendLine('');
+  },
+  'pwd':          function(){ appendLine('<span class="t-dim">/home/drishti/portfolio</span>'); },
+  'date':         function(){ appendLine('<span class="t-dim">' + new Date().toString() + '</span>'); },
+  'uname':        function(){ appendLine('<span class="t-dim">Drishti-OS 2024.1 (Telecom-Edition) x86_64 GNU/Linux</span>'); },
+  'uptime':       function(){
+    appendLine('');
+    appendLine('<span class="t-dim">up 2 years, 3 months &nbsp;load average: motivated, curious, caffeinated</span>');
+    appendLine('');
+  },
+  'git log':      function(){
+    appendLine('');
+    var commits = [
+      ['a3f9b12','Built CLI auth tool with JWT + Azure AD'],
+      ['7e2c401','Automated SQL workflows (-40% manual effort)'],
+      ['1bc8d3f','Data Transformation POC architecture v1'],
+      ['f4a2d9c','Silver Star Award added to achievements'],
+      ['b8e3c01','Finland exchange program — shipped research'],
+      ['d1c9f44','Initial commit: became a developer'],
+    ];
+    for (var i = 0; i < commits.length; i++)
+      appendLine('<span class="t-amber">' + commits[i][0] + '</span> <span class="t-dim">— ' + commits[i][1] + '</span>');
+    appendLine('');
+  },
+  'git status':   function(){
+    appendLine('');
+    appendLine('<span class="t-dim">On branch: <span style="color:var(--green)">main</span></span>');
+    appendLine('<span class="t-dim">Your branch is ahead of origin by 1 commit</span>');
+    appendLine('');
+    appendLine('<span style="color:var(--green)">Changes staged for commit:</span>');
+    appendLine('<span class="t-item"><span style="color:var(--green)">new file: next_role.txt</span></span>');
+    appendLine('<span class="t-item"><span style="color:var(--green)">modified: career_trajectory.md</span></span>');
+    appendLine('');
+  },
+  'git blame':    function(){
+    appendLine('');
+    appendLine('<span class="t-amber">portfolio.html</span>');
+    appendLine('<span class="t-dim">a3f9b12 (Drishti 2024) — all of it. Every. Single. Line.</span>');
+    appendLine('');
+  },
+  'coffee':       function(){
+    appendLine('');
+    appendLine('<span class="t-amber">Brewing coffee...</span>');
+    appendLine('<span class="t-dim">Beans: Dark Roast (production-grade)</span>');
+    appendLine('<span class="t-dim">Grind: Fine (like my SQL queries)</span>');
+    appendLine('<span class="t-dim">Water: 94C (hot like deploy nights)</span>');
+    appendLine('<span class="t-success">Done. Espresso ready.</span>');
+    appendLine('');
+  },
+  'vim':          function(){
+    appendLine('');
+    appendLine('<span class="t-dim">Opening vim...</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">~</span>');
+    appendLine('<span class="t-bright">~</span>');
+    appendLine('<span class="t-bright">~</span>');
+    appendLine('<span class="t-dim">"portfolio.html" 820L, 61000C</span>');
+    appendLine('');
+    appendLine('<span class="t-error">Stuck? Type  :q!  and press Enter to escape.</span>');
+    appendLine('<span class="t-comment"># You\'re welcome.</span>');
+    appendLine('');
+  },
+  'nano':         function(){
+    appendLine('');
+    appendLine('<span class="t-success">nano: the sensible choice. You have good taste.</span>');
+    appendLine('<span class="t-dim">[ Ctrl+X to exit. See? Easy. ]</span>');
+    appendLine('');
+  },
+  'sudo su':      function(){
+    appendLine('');
+    appendLine('<span class="t-error">[sudo] password for drishti:</span>');
+    setTimeout(function(){
+      appendLine('<span class="t-error">Sorry, try again.</span>');
+      setTimeout(function(){
+        appendLine('<span class="t-error">sudo: 3 incorrect password attempts</span>');
+        appendLine('<span class="t-comment"># Nice try though ;)</span>');
+        appendLine('');
+      }, 800);
+    }, 1200);
+  },
+  'sudo':         function(){ CMDS['sudo su'](); },
+  'hack':         function(){
+    appendLine('');
+    appendLine('<span class="t-error">Initializing hack sequence...</span>');
+    setTimeout(function(){
+      appendLine('<span class="t-dim">Scanning target...</span>');
+      setTimeout(function(){
+        appendLine('<span class="t-dim">Bypassing firewall...</span>');
+        setTimeout(function(){
+          appendLine('');
+          appendLine('<span class="t-success">ACCESS GRANTED</span>');
+          appendLine('<span class="t-dim">Target: github.com/Drishti228</span>');
+          appendLine('<span class="t-comment"># Just kidding. That\'s just my public GitHub.</span>');
+          appendLine('');
+        }, 800);
+      }, 600);
+    }, 500);
+  },
+  'ping drishti': function(){
+    appendLine('');
+    appendLine('<span class="t-dim">PING drishti@portfolio.dev</span>');
+    var delays = [300,600,900,1200];
+    var ms = [12,11,14,12];
+    for (var i = 0; i < 4; i++) {
+      (function(j){
+        setTimeout(function(){
+          appendLine('<span class="t-dim">64 bytes from drishti: icmp_seq=' + (j+1) + ' ttl=64 time=' + ms[j] + ' ms</span>');
+          if (j === 3) {
+            appendLine('');
+            appendLine('<span class="t-dim">--- drishti ping statistics ---</span>');
+            appendLine('<span class="t-dim">4 packets transmitted, 4 received, 0% packet loss</span>');
+            appendLine('<span class="t-success">drishti is responsive. (Usually.)</span>');
+            appendLine('');
+          }
+        }, delays[j]);
+      })(i);
+    }
+  },
+  'fortune':      function(){
+    var quotes = [
+      '"The best code is no code at all." — Jeff Atwood',
+      '"First, solve the problem. Then, write the code." — John Johnson',
+      '"Any fool can write code a computer understands. Good programmers write code humans can understand." — Martin Fowler',
+      '"Programs must be written for people to read, and only incidentally for machines to execute." — Abelson',
+      '"Simplicity is prerequisite for reliability." — Dijkstra',
+      '"The most powerful tool we have as developers is automation." — Scott Hanselman',
+      '"Code never lies, comments sometimes do." — Ron Jeffries'
+    ];
+    appendLine('');
+    appendLine('<span class="t-purple">' + esc(quotes[Math.floor(Math.random() * quotes.length)]) + '</span>');
+    appendLine('');
+  },
+  'matrix':       function(){
+    appendLine('');
+    appendLine('<span class="t-green">Wake up, Neo...</span>');
+    setTimeout(function(){
+      appendLine('<span class="t-dim">The Matrix has you.</span>');
+      setTimeout(function(){
+        appendLine('<span class="t-green">Follow the white rabbit.</span>');
+        setTimeout(function(){
+          appendLine('');
+          var row = '';
+          var chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ';
+          for (var i = 0; i < 6; i++) {
+            row = '';
+            for (var j = 0; j < 30; j++) row += chars[Math.floor(Math.random() * chars.length)] + ' ';
+            appendLine('<span style="color:var(--green);font-size:10px;letter-spacing:2px">' + row + '</span>');
+          }
+          appendLine('');
+          appendLine('<span class="t-comment"># Knock knock, ' + esc('Drishti') + '.</span>');
+          appendLine('');
+        }, 800);
+      }, 800);
+    }, 600);
+  },
+  'exit':         function(){ appendLine('<span class="t-dim">There is no exit. The portfolio is your home now.</span>'); appendLine(''); },
+  'hello':        function(){ appendLine('<span class="t-green">Hello! Try typing <span style="color:var(--cyan)">help</span> or <span style="color:var(--cyan)">fun</span> to explore.</span>'); appendLine(''); },
+  'hi':           function(){ appendLine('<span class="t-green">Hey! Type <span style="color:var(--cyan)">projects</span> to see my work, or <span style="color:var(--cyan)">fun</span> for easter eggs.</span>'); appendLine(''); },
+  'man drishti':  function(){
+    appendLine('');
+    appendLine('<span class="t-amber">DRISHTI(1)               Developer Manual               DRISHTI(1)</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">NAME</span>');
+    appendLine('<span class="t-item">drishti -- Associate Software Developer, Ericsson</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">SYNOPSIS</span>');
+    appendLine('<span class="t-item">drishti [--backend] [--automate] [--ml] [--ship]</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">DESCRIPTION</span>');
+    appendLine('<span class="t-item">Builds scalable backend systems, automates SQL workflows,</span>');
+    appendLine('<span class="t-item">develops ML pipelines, and ships reliable software.</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">OPTIONS</span>');
+    appendLine('<span class="t-item">--backend    Python, REST APIs, JWT, Azure AD SSO</span>');
+    appendLine('<span class="t-item">--data       Pandas, scikit-learn, OracleDB, Tableau</span>');
+    appendLine('<span class="t-item">--telecom    Ericsson ECM, EOC, Order Care workflows</span>');
+    appendLine('<span class="t-item">--award      Silver Star 2024</span>');
+    appendLine('');
+    appendLine('<span class="t-bright">BUGS</span>');
+    appendLine('<span class="t-item">None known. File issues at: linkedin.com/in/sdev-drishti</span>');
+    appendLine('');
+  }
+};
+
+function cmdCat(arg) {
+  if (arg === 'resume' || arg === 'resume.txt' || arg === 'resume.pdf') {
+    appendLine('');
+    appendLine('<span class="t-amber">cat: resume — redirecting to contact...</span>');
+    setTimeout(function(){ navigate('contact'); }, 500);
+  } else {
+    appendLine('<span class="t-error">cat: ' + esc(arg) + ': No such file or directory</span>');
+    appendLine('<span class="t-dim">Hint: try <span style="color:var(--cyan)">cat resume</span></span>');
+  }
+}
+
+function cmdMan(arg) {
+  if (arg === 'drishti') { CMDS['man drishti'](); }
+  else { appendLine('<span class="t-error">No manual entry for ' + esc(arg) + '</span>'); }
+}
+
+// Run a hint chip command
+function runHint(cmd) {
+  if (!inp) return;
+  inp.value = '';
+  ghost.innerHTML = '';
+  clearSugs();
+  handleCommand(cmd);
+  inp.focus();
+}
+
+// ══ INPUT HANDLERS ══
+function initInputHandlers() {
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      clearSugs();
+      var val = this.value;
+      handleCommand(val);
+      this.value = '';
+      ghost.innerHTML = '';
+      return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (histIdx < cmdHistory.length - 1) histIdx++;
+      this.value = cmdHistory[histIdx] || '';
+      updateGhost(this.value);
+      return;
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (histIdx > 0) histIdx--;
+      else { histIdx = -1; this.value = ''; }
+      this.value = histIdx >= 0 ? cmdHistory[histIdx] : '';
+      updateGhost(this.value);
+      return;
+    }
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      var gt = ghostText(this.value);
+      if (gt) { this.value = gt; updateGhost(gt); clearSugs(); }
+      else if (curSugs.length > 0) { sugIdx = (sugIdx + 1) % curSugs.length; updateSugSel(); }
+      return;
+    }
+    if (e.key === 'Escape') { clearSugs(); ghost.innerHTML = ''; return; }
+  });
+
+  inp.addEventListener('input', function() {
+    updateGhost(this.value);
+    updateSugs(this.value);
+  });
+
+  document.querySelector('.terminal-pane').addEventListener('click', function() { if (inp) inp.focus(); });
+}
+
+function ghostText(v) {
+  if (!v) return '';
+  var vl = v.toLowerCase();
+  for (var i = 0; i < ALL_CMDS.length; i++) {
+    if (ALL_CMDS[i].cmd.indexOf(vl) === 0 && ALL_CMDS[i].cmd !== vl) return ALL_CMDS[i].cmd;
+  }
+  return '';
+}
+function updateGhost(v) {
+  var c = ghostText(v);
+  if (c && v) {
+    ghost.innerHTML = '<span style="color:transparent">' + esc(v) + '</span><span class="ghost-suffix">' + esc(c.slice(v.length)) + '</span>';
+  } else {
+    ghost.innerHTML = '';
+  }
+}
+function updateSugs(v) {
+  if (!v) { clearSugs(); return; }
+  var vl = v.toLowerCase();
+  var m = [];
+  for (var i = 0; i < ALL_CMDS.length; i++) {
+    if (ALL_CMDS[i].cmd.indexOf(vl) === 0 && ALL_CMDS[i].cmd !== vl) m.push(ALL_CMDS[i]);
+  }
+  if (!m.length) { clearSugs(); return; }
+  curSugs = m; sugIdx = -1;
+  var html = '';
+  for (var j = 0; j < Math.min(m.length, 5); j++) {
+    html += '<div class="suggestion-item" onclick="pickSug(\'' + m[j].cmd.replace(/'/g,"\\'") + '\')">' +
+            '<span>' + esc(m[j].cmd) + '</span>' +
+            '<span class="sug-desc">' + esc(m[j].desc) + '</span></div>';
+  }
+  sugBox.innerHTML = html;
+  sugBox.classList.add('open');
+}
+function clearSugs() { sugBox.classList.remove('open'); sugBox.innerHTML = ''; curSugs = []; sugIdx = -1; }
+function updateSugSel() {
+  var items = document.querySelectorAll('.suggestion-item');
+  for (var i = 0; i < items.length; i++) items[i].classList.toggle('selected', i === sugIdx);
+  if (sugIdx >= 0 && curSugs[sugIdx]) { inp.value = curSugs[sugIdx].cmd; updateGhost(inp.value); }
+}
+function pickSug(cmd) { inp.value = cmd; clearSugs(); ghost.innerHTML = ''; inp.focus(); }
+
+// ══ MODAL ══
+function openProject(id) {
+  var p = PROJ[id];
+  if (!p) return;
+  var techHtml = '';
+  for (var i = 0; i < p.tech.length; i++) techHtml += '<span class="tech-chip">' + p.tech[i] + '</span>';
+  document.getElementById('modal-content').innerHTML =
+    '<div class="modal-label">' + p.label + '</div>' +
+    '<div class="modal-title">' + p.name + '</div>' +
+    '<div class="modal-block"><div class="modal-block-label">Problem</div><div class="modal-block-text">' + p.problem + '</div></div>' +
+    '<div class="modal-block"><div class="modal-block-label">Solution</div><div class="modal-block-text">' + p.solution + '</div></div>' +
+    '<div class="modal-block"><div class="modal-block-label">Tech Stack</div><div class="modal-tech">' + techHtml + '</div></div>' +
+    '<div class="modal-block"><div class="modal-block-label">Impact</div><div class="modal-impact">' + p.impact + '</div></div>';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e, force) {
+  if (force || (e && e.target === document.getElementById('modal-overlay')))
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(null, true); });
+
+// ══ TIMELINE ══
+function toggleTimeline(el) {
+  var b = el.querySelector('.timeline-bullets');
+  var h = el.querySelector('.timeline-expand-hint');
+  var open = b.classList.toggle('open');
+  h.textContent = open ? 'click to collapse' : 'click to expand';
+}
+
+// ══ SKILL BARS ══
+function animateSkillBars() {
+  var bars = document.querySelectorAll('.skill-bar-fill');
+  for (var i = 0; i < bars.length; i++) {
+    bars[i].style.width = bars[i].getAttribute('data-pct') + '%';
+  }
+}
+
+// ══ COUNTERS ══
+function animateCounters() {
+  var counts = document.querySelectorAll('[data-count]');
+  for (var i = 0; i < counts.length; i++) {
+    (function(el) {
+      var target = parseInt(el.getAttribute('data-count'));
+      var suffix = (target === 40) ? '%' : '';
+      var cur = 0;
+      var step = Math.max(1, Math.floor(target / 30));
+      var iv = setInterval(function() {
+        cur = Math.min(cur + step, target);
+        el.textContent = cur + suffix;
+        if (cur >= target) clearInterval(iv);
+      }, 40);
+    })(counts[i]);
+  }
+  var floats = document.querySelectorAll('[data-float]');
+  for (var j = 0; j < floats.length; j++) {
+    (function(el) {
+      var target = parseFloat(el.getAttribute('data-float'));
+      var cur = 0;
+      var iv = setInterval(function() {
+        cur = Math.min(cur + 0.1, target);
+        el.textContent = cur.toFixed(2);
+        if (cur >= target) clearInterval(iv);
+      }, 30);
+    })(floats[j]);
+  }
+}
+
+// ══ CLI DEMO ══
+var cliRunning = false;
+var SCENARIOS = {
+  upload: [
+    {t:'$ drishti-cli upload --file data.json --endpoint /api/transform', c:'t-cyan', d:0},
+    {t:'', d:300},
+    {t:'&gt; Initializing CLI tool v1.0...', c:'t-dim', d:600},
+    {t:'&gt; Connecting to Azure AD...', c:'t-dim', d:1000},
+    {t:'&#10004; Connected to Azure AD', c:'t-success', d:1600},
+    {t:'&gt; Requesting auth token...', c:'t-dim', d:1900},
+    {t:'&#10004; Token acquired [expires: +3600s]', c:'t-success', d:2600},
+    {t:'', d:2900},
+    {t:'&gt; Validating payload: data.json', c:'t-dim', d:3100},
+    {t:'&#10004; File valid (1.2 MB, 847 records)', c:'t-success', d:3700},
+    {t:'', d:3900},
+    {t:'&gt; Uploading to /api/transform...', c:'t-dim', d:4100},
+    {t:'PROGRESS', c:'progress', d:4400},
+    {t:'', d:6100},
+    {t:'&#10004; Upload successful', c:'t-success', d:6400},
+    {t:'&#10004; {"status":"ok","records_processed":847,"ms":312}', c:'t-green', d:6700},
+    {t:'', d:6900},
+    {t:'&gt; Process complete.', c:'t-dim', d:7200}
+  ],
+  query: [
+    {t:'$ drishti-cli query --endpoint /api/orders --filter status=pending', c:'t-cyan', d:0},
+    {t:'', d:300},
+    {t:'&gt; Checking token cache...', c:'t-dim', d:600},
+    {t:'&#10004; Cached token valid', c:'t-success', d:1000},
+    {t:'&gt; Sending authenticated GET request...', c:'t-dim', d:1300},
+    {t:'&gt; GET /api/orders?status=pending', c:'t-dim', d:1800},
+    {t:'', d:2100},
+    {t:'&#10004; 200 OK  [142ms]', c:'t-success', d:2400},
+    {t:'', d:2600},
+    {t:'Results:', c:'t-bright', d:2800},
+    {t:'&nbsp; { "total": 23, "pending": 23, "page": 1 }', c:'t-cyan', d:3000},
+    {t:'&nbsp; [{"id":"ORD-001","status":"pending","amount":4200}, ...]', c:'t-dim', d:3200},
+    {t:'', d:3500},
+    {t:'&gt; Query complete. 23 records returned.', c:'t-dim', d:3700}
+  ],
+  status: [
+    {t:'$ drishti-cli status', c:'t-cyan', d:0},
+    {t:'', d:300},
+    {t:'&gt; Checking authentication status...', c:'t-dim', d:600},
+    {t:'', d:900},
+    {t:'&nbsp; Auth Provider  : Azure AD (SSO)', c:'t-bright', d:1100},
+    {t:'&nbsp; Status         : &#10004; Authenticated', c:'t-success', d:1300},
+    {t:'&nbsp; Token          : &#10004; Valid', c:'t-success', d:1500},
+    {t:'&nbsp; Expires        : 52m 14s', c:'t-dim', d:1700},
+    {t:'&nbsp; User           : drishti@ericsson.com', c:'t-dim', d:1900},
+    {t:'&nbsp; Permissions    : upload, query, read', c:'t-dim', d:2100},
+    {t:'', d:2300},
+    {t:'&#10004; All systems operational.', c:'t-success', d:2600}
+  ]
+};
+
+function runCliDemo(scenario) {
+  if (cliRunning) return;
+  scenario = scenario || 'upload';
+  cliRunning = true;
+  var statusEl = document.getElementById('cli-status');
+  statusEl.textContent = 'RUNNING';
+  statusEl.style.color = 'var(--green)';
+  var output = document.getElementById('cli-output');
+  output.innerHTML = '';
+  var body = document.getElementById('cli-demo-body');
+  var lines = SCENARIOS[scenario] || SCENARIOS.upload;
+  var maxDelay = 0;
+  for (var i = 0; i < lines.length; i++) if (lines[i].d > maxDelay) maxDelay = lines[i].d;
+
+  for (var j = 0; j < lines.length; j++) {
+    (function(line) {
+      setTimeout(function() {
+        if (line.c === 'progress') {
+          var wrap = document.createElement('span');
+          wrap.className = 't-line';
+          wrap.innerHTML = '<span class="t-dim">&nbsp;[</span><span class="progress-bar-wrap"><span class="progress-bar-inner" id="cpbar"></span></span><span class="t-dim">] </span><span id="cpct" class="t-green">0%</span>';
+          output.appendChild(wrap);
+          body.scrollTop = body.scrollHeight;
+          var p = 0;
+          var iv = setInterval(function() {
+            p = Math.min(p + Math.floor(Math.random() * 10) + 4, 100);
+            var bar = document.getElementById('cpbar');
+            var pctEl = document.getElementById('cpct');
+            if (bar) bar.style.width = p + '%';
+            if (pctEl) pctEl.textContent = p + '%';
+            if (p >= 100) clearInterval(iv);
+          }, 100);
+        } else {
+          var s = document.createElement('span');
+          s.className = 't-line ' + (line.c || '');
+          s.innerHTML = line.t || '&nbsp;';
+          output.appendChild(s);
+          body.scrollTop = body.scrollHeight;
+        }
+      }, line.d);
+    })(lines[j]);
+  }
+  setTimeout(function() {
+    cliRunning = false;
+    statusEl.textContent = 'DONE';
+    statusEl.style.color = 'var(--cyan)';
+    showToast('Demo complete');
+  }, maxDelay + 1200);
+}
+
+// ══ TOAST ══
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show' + (type ? ' ' + type : '');
+  setTimeout(function() { t.className = ''; }, 3000);
+}
+
+// ══ KONAMI CODE ══
+function initKonami() {
+  var K = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  var ki = 0;
+  document.addEventListener('keydown', function(e) {
+    if (document.activeElement === inp) return;
+    if (e.key === K[ki]) {
+      ki++;
+      if (ki === K.length) {
+        ki = 0;
+        navigate('secret');
+        showToast('Easter egg unlocked!');
+        appendLine('<span class="t-purple">Konami code entered. Welcome.</span>');
+        appendLine('');
+      }
+    } else { ki = 0; }
+  });
+}
+
+// ══ UTILS ══
+function esc(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function lev(a, b) {
+  var m = a.length, n = b.length;
+  var dp = [];
+  for (var i = 0; i <= m; i++) {
+    dp[i] = [];
+    for (var j = 0; j <= n; j++) {
+      dp[i][j] = i === 0 ? j : j === 0 ? i : 0;
+    }
+  }
+  for (var i2 = 1; i2 <= m; i2++) {
+    for (var j2 = 1; j2 <= n; j2++) {
+      dp[i2][j2] = a[i2-1] === b[j2-1]
+        ? dp[i2-1][j2-1]
+        : 1 + Math.min(dp[i2-1][j2], dp[i2][j2-1], dp[i2-1][j2-1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// ══ INIT ══
+navigate('splash');
+</script>
+</body>
+</html>
